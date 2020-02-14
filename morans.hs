@@ -23,7 +23,7 @@ gauss scale = do
   return $ scale * sqrt (-2 * log x1) * cos (2 * pi * x2)
 
 newBrain :: [Int] -> IO NeuralNet
-newBrain szs =
+newBrain sizes =
   flip mapM sizePairs $ \(n, m) -> do
       let v = constVector m
       m <- gaussMatrix n m
@@ -31,7 +31,7 @@ newBrain szs =
 
   where gaussMatrix = \m n -> replicateM n $ replicateM m $ gauss 0.01
         constVector n = replicate n 1
-        sizePairs = zip szs (tail szs)
+        sizePairs = zip sizes (tail sizes)
 
 -- activation function
 relu :: Float -> Float
