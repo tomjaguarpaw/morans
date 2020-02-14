@@ -95,11 +95,16 @@ learn xv yv layers =
   let (avs, dvs) = deltas xv yv layers
       weights = snd <$> layers
       biases  = fst <$> layers
-  in  zip (zipWith descend biases dvs) $ zipWith3
+
+      newWeights = zipWith3
         (\wvs av dv -> zipWith (\wv d -> descend wv (d ..* av)) wvs dv)
         weights
         avs
         dvs
+
+      newBiases = zipWith descend biases dvs
+
+  in  zip newBiases newWeights
 
 getImage :: Num b => BS.ByteString -> Int64 -> [b]
 getImage s n =
