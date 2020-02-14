@@ -44,8 +44,10 @@ relu' x | x < 0     = 0
 
 zLayer :: [Float] -> ([Float], [[Float]]) -> [Float]
 zLayer as (bs, wvs) = bs .+ (as .* wvs)
-  where x .* y = dot x <$> y
-        x .+ y = zipWith (+) x y
+  where x .+ y = zipWith (+) x y
+
+(.*) :: [Float] -> [[Float]] -> [Float]
+x .* y = dot x <$> y
 
 dot :: [Float] -> [Float] -> Float
 dot x y = sum (zipWith (*) x y)
@@ -79,7 +81,7 @@ deltas xv yv layers =
   f _          []         dvs          = dvs
   f (wm : wms) (zv : zvs) dvs@(dv : _) = f wms zvs $ (: dvs) $ zipWith
     (*)
-    [ dot dv row | row <- wm ]
+    (dv .* wm)
     (relu' <$> zv)
 
 eta :: Float
