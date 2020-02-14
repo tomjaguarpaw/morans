@@ -43,7 +43,7 @@ zLayer as (bs, wvs) = bs .+ (as .* wvs)
         dot x y = sum (zipWith (*) x y)
 
 feed :: [Float] -> NeuralNet -> [Float]
-feed = foldl' (\y -> (\x -> map relu (zLayer y x)))
+feed = foldl' (\y x -> map relu (zLayer y x))
 
 -- xs: vector of inputs
 -- Returns a list of (weighted inputs, activations) of each layer,
