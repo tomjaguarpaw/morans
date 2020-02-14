@@ -38,8 +38,8 @@ relu' x | x < 0     = 0
 
 zLayer :: [Float] -> ([Float], [[Float]]) -> [Float]
 zLayer as (bs, wvs) = bs .+ (as .* wvs)
-  where as .* wvs = dot as <$> wvs
-        bs .+ xs = zipWith (+) bs xs
+  where x .* y = dot x <$> y
+        x .+ y = zipWith (+) x y
         dot x y = sum (zipWith (*) x y)
 
 feed :: [Float] -> NeuralNet -> [Float]
