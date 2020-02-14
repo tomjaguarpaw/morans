@@ -84,7 +84,8 @@ eta :: Float
 eta = 0.002
 
 descend :: [Float] -> [Float] -> [Float]
-descend av dv = zipWith (-) av ((eta *) <$> dv)
+descend av dv = av .- ((eta *) <$> dv)
+  where x .- y = zipWith (-) x y
 
 learn :: [Float] -> [Float] -> NeuralNet -> NeuralNet
 learn xv yv layers =
