@@ -86,15 +86,17 @@ eta = 0.002
 descend :: [Float] -> [Float] -> [Float]
 descend av dv = av .- (eta ..* dv)
   where x .- y = zipWith (-) x y
-        lambda ..* x = map (lambda *) x
+
+(..*) :: Float -> [Float] -> [Float]
+lambda ..* x = map (lambda *) x
 
 learn :: [Float] -> [Float] -> NeuralNet -> NeuralNet
 learn xv yv layers =
   let (avs, dvs) = deltas xv yv layers
       weights = snd <$> layers
-      biases  = (fst <$> layers)
+      biases  = fst <$> layers
   in  zip (zipWith descend biases dvs) $ zipWith3
-        (\wvs av dv -> zipWith (\wv d -> descend wv ((d *) <$> av)) wvs dv)
+        (\wvs av dv -> zipWith (\wv d -> descend wv (d ..* av)) wvs dv)
         weights
         avs
         dvs
