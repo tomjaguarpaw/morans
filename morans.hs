@@ -24,9 +24,10 @@ gauss scale = do
 
 newBrain :: [Int] -> IO NeuralNet
 newBrain szs@(_ : ts) =
-  zip (flip replicate 1 <$> ts)
+  zip (constVector <$> ts)
     <$> zipWithM gaussMatrix szs ts
   where gaussMatrix = \m n -> replicateM n $ replicateM m $ gauss 0.01
+        constVector n = replicate n 1
 
 -- activation function
 relu :: Float -> Float
