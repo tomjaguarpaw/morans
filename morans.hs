@@ -91,9 +91,11 @@ descend av dv = av .- (eta ..* dv)
 learn :: [Float] -> [Float] -> NeuralNet -> NeuralNet
 learn xv yv layers =
   let (avs, dvs) = deltas xv yv layers
-  in  zip (zipWith descend (fst <$> layers) dvs) $ zipWith3
+      weights = snd <$> layers
+      biases  = (fst <$> layers)
+  in  zip (zipWith descend biases dvs) $ zipWith3
         (\wvs av dv -> zipWith (\wv d -> descend wv ((d *) <$> av)) wvs dv)
-        (snd <$> layers)
+        weights
         avs
         dvs
 
