@@ -77,7 +77,8 @@ deltas :: [Float] -> [Float] -> NeuralNet -> ([[Float]], [[Float]])
 deltas xv yv layers =
   let (avs@(av : _), zv : zvs) = revaz xv layers
       delta0 = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
-  in  (reverse avs, f ((transpose . reverse) (snd <$> layers)) zvs [delta0]) where
+      weights = snd <$> layers
+  in  (reverse avs, f ((transpose . reverse) weights) zvs [delta0]) where
   f _          []         dvs          = dvs
   f (wm : wms) (zv : zvs) dvs@(dv : _) = f wms zvs $ (: dvs) $ zipWith
     (*)
