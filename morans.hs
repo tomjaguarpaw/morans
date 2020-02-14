@@ -124,14 +124,14 @@ render n = let s = " .:oO@" in s !! (fromIntegral n * length s `div` 256)
 
 main :: IO ()
 main = do
-  as                             <- getArgs
-  [trainI, trainL, testI, testL] <- mapM
-    ((decompress <$>) . BS.readFile)
-    [ "train-images-idx3-ubyte.gz"
-    , "train-labels-idx1-ubyte.gz"
-    , "t10k-images-idx3-ubyte.gz"
-    , "t10k-labels-idx1-ubyte.gz"
-    ]
+  as <- getArgs
+
+  let loadZip filename = decompress <$> BS.readFile filename
+
+  trainI <- decompress <$> BS.readFile "train-images-idx3-ubyte.gz"
+  trainL <- decompress <$> BS.readFile "train-labels-idx1-ubyte.gz"
+  testI  <- decompress <$> BS.readFile "t10k-images-idx3-ubyte.gz"
+  testL  <- decompress <$> BS.readFile "t10k-labels-idx1-ubyte.gz"
 
   when (as == ["samplesjs"]) $ do
     putStr $ unlines
