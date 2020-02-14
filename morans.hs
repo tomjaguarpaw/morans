@@ -23,9 +23,9 @@ gauss scale = do
   return $ scale * sqrt (-2 * log x1) * cos (2 * pi * x2)
 
 newBrain :: [Int] -> IO NeuralNet
-newBrain szs@(_ : ts) = do
-  let v = constVector <$> ts
-  m <- zipWithM gaussMatrix szs ts
+newBrain szs = do
+  let v = constVector <$> tail szs
+  m <- zipWithM gaussMatrix szs (tail szs)
   return (zip v m)
 
   where gaussMatrix = \m n -> replicateM n $ replicateM m $ gauss 0.01
