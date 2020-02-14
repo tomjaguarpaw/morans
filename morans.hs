@@ -128,10 +128,10 @@ main = do
 
   let loadZip filename = decompress <$> BS.readFile filename
 
-  trainI <- decompress <$> BS.readFile "train-images-idx3-ubyte.gz"
-  trainL <- decompress <$> BS.readFile "train-labels-idx1-ubyte.gz"
-  testI  <- decompress <$> BS.readFile "t10k-images-idx3-ubyte.gz"
-  testL  <- decompress <$> BS.readFile "t10k-labels-idx1-ubyte.gz"
+  trainI <- loadZip "train-images-idx3-ubyte.gz"
+  trainL <- loadZip "train-labels-idx1-ubyte.gz"
+  testI  <- loadZip "t10k-images-idx3-ubyte.gz"
+  testL  <- loadZip "t10k-labels-idx1-ubyte.gz"
 
   when (as == ["samplesjs"]) $ do
     putStr $ unlines
