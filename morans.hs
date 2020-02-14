@@ -46,7 +46,9 @@ zLayer :: [Float] -> ([Float], [[Float]]) -> [Float]
 zLayer as (bs, wvs) = bs .+ (as .* wvs)
   where x .* y = dot x <$> y
         x .+ y = zipWith (+) x y
-        dot x y = sum (zipWith (*) x y)
+
+dot :: [Float] -> [Float] -> Float
+dot x y = sum (zipWith (*) x y)
 
 feed :: [Float] -> NeuralNet -> [Float]
 feed = foldl' (\v layer -> map relu (zLayer v layer))
