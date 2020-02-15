@@ -84,7 +84,8 @@ tests =
   Hedgehog.checkParallel $ Hedgehog.Group "" [
     ("prop_newBrain_rectangular", prop_newBrain_rectangular),
     ("prop_genNeuralNetwork_valid", prop_genNeuralNetwork_valid),
-    ("prop_deltas_match", prop_deltas_match)
+    ("prop_deltas_match", prop_deltas_match),
+    ("prop_revazes_match", prop_revazes_match)
   ]
 
 genVector :: Hedgehog.MonadGen m => Int -> m [Float]
@@ -129,6 +130,13 @@ prop_deltas_match =
     (vin, vout, nn) <- Hedgehog.forAll deltasInput
 
     deltasnew vin vout nn Hedgehog.=== deltas vin vout nn
+
+prop_revazes_match :: Hedgehog.Property
+prop_revazes_match =
+  Hedgehog.property $ do
+    (vin, _, nn) <- Hedgehog.forAll deltasInput
+
+    revaznew vin nn Hedgehog.=== revaz vin nn
 
 prop_genNeuralNetwork_valid :: Hedgehog.Property
 prop_genNeuralNetwork_valid =
@@ -185,6 +193,14 @@ feed = foldl' (\v layer -> map relu (zLayer v layer))
 revaz
   :: Foldable t => [Float] -> t ([Float], [[Float]]) -> ([[Float]], [[Float]])
 revaz xs = foldl'
+  (\(avs@(av : _), zs) (bs, wms) ->
+    let zs' = zLayer av (bs, wms) in ((relu <$> zs') : avs, zs' : zs)
+  )
+  ([xs], [])
+
+revaznew
+  :: Foldable t => [Float] -> t ([Float], [[Float]]) -> ([[Float]], [[Float]])
+revaznew xs = foldl'
   (\(avs@(av : _), zs) (bs, wms) ->
     let zs' = zLayer av (bs, wms) in ((relu <$> zs') : avs, zs' : zs)
   )
