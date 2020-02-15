@@ -72,9 +72,15 @@ correctShape nn = do
     Hedgehog.assert (layerSizesMatch nn)
     Hedgehog.assert (biasesMatch nn)
 
+andM :: Monad m => [m Bool] -> m Bool
+andM [] = return True
+andM (x:xs) = do
+  x' <- x
+  if x' then andM xs else return False
+
 tests :: IO Bool
 tests =
-  fmap and $ sequence $ replicate 10 $
+  andM $ replicate 10 $
   Hedgehog.checkParallel $ Hedgehog.Group "" [
     ("prop_newBrain_rectangular", prop_newBrain_rectangular),
     ("prop_genNeuralNetwork_valid", prop_genNeuralNetwork_valid),
