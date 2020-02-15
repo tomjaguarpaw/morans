@@ -214,10 +214,10 @@ deltasnew xv yv layers =
       delta0 = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
       weights = snd <$> layers
 
-  in  (reverse avs, f (transpose <$> reverse weights) zvs [delta0]) where
-  f _          []         dvs          = dvs
-  f (wm : wms) (zv : zvs) dvs@(dv : _) =
-    f wms zvs $ zipWith (*) (dv .* wm) (relu' <$> zv) : dvs
+  in  (reverse avs, f (transpose <$> reverse weights) zvs [] delta0) where
+  f _          []         dvs dv = dv:dvs
+  f (wm : wms) (zv : zvs) dvs dv =
+    f wms zvs (dv:dvs) (zipWith (*) (dv .* wm) (relu' <$> zv))
 
 eta :: Float
 eta = 0.002
