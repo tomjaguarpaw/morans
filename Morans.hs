@@ -1,6 +1,10 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+--{-# OPTIONS_GHC -Wall #-}
+
+{-# OPTIONS_GHC -Wmissing-signatures #-}
+
 -- Requires files from http://yann.lecun.com/exdb/mnist/
 module Morans where
 
@@ -70,9 +74,61 @@ correctShape nn = do
 
 tests :: IO Bool
 tests =
+  fmap and $ sequence $ replicate 10 $
   Hedgehog.checkParallel $ Hedgehog.Group "" [
-    ("prop_newBrain_rectangular", prop_newBrain_rectangular)
+    ("prop_newBrain_rectangular", prop_newBrain_rectangular),
+    ("prop_genNeuralNetwork_valid", prop_genNeuralNetwork_valid),
+    ("prop_deltas_match", prop_deltas_match)
   ]
+
+genVector :: Hedgehog.MonadGen m => Int -> m [Float]
+genVector n =
+  Gen.list (Range.singleton n) (Gen.float (Range.linearFrac (-10) 10))
+
+genMatrix :: Hedgehog.MonadGen m => Int -> Int -> m [[Float]]
+genMatrix m n = Gen.list (Range.singleton n) (genVector m)
+
+genNeuralNetworkwDimensions :: Hedgehog.MonadGen m => m (NeuralNet, [Int])
+genNeuralNetworkwDimensions = do
+  dimensions <- Gen.list (Range.linear 2 10) (Gen.int (Range.linear 1 10))
+
+  let inOutDimensions = zip dimensions (tail dimensions)
+
+  nn <- flip mapM inOutDimensions $ \(ind, outd) -> do
+    v <- genVector outd
+    m <- genMatrix ind outd
+
+    return (v, m)
+
+  return (nn, dimensions)
+
+genNeuralNetwork :: Hedgehog.MonadGen m => m NeuralNet
+genNeuralNetwork = fmap fst genNeuralNetworkwDimensions
+
+deltasInput :: Hedgehog.MonadGen m => m ([Float], [Float], NeuralNet)
+deltasInput = do
+  (nn, dimensions) <- genNeuralNetworkwDimensions
+
+  let ind  = head dimensions
+      outd = last dimensions
+
+  vin  <- genVector ind
+  vout <- genVector outd
+
+  return (vin, vout, nn)
+
+prop_deltas_match :: Hedgehog.Property
+prop_deltas_match =
+  Hedgehog.property $ do
+    (vin, vout, nn) <- Hedgehog.forAll deltasInput
+
+    deltasnew vin vout nn Hedgehog.=== deltas vin vout nn
+
+prop_genNeuralNetwork_valid :: Hedgehog.Property
+prop_genNeuralNetwork_valid =
+  Hedgehog.property $ do
+    nn <- Hedgehog.forAll genNeuralNetwork
+    correctShape nn
 
 type Biases = [Float]
 type Weights = [[Float]]
@@ -139,11 +195,23 @@ deltas :: [Float] -> [Float] -> NeuralNet -> ([[Float]], [[Float]])
 deltas xv yv layers =
   let (avs@(av : _), zv : zvs) = revaz xv layers
       delta0 = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
-      weights = snd <$> layers
-  in  (reverse avs, f ((transpose . reverse) weights) zvs [delta0]) where
+  in  (reverse avs, f (transpose . snd <$> reverse layers) zvs [delta0]) where
   f _          []         dvs          = dvs
-  f (wm : wms) (zv : zvs) dvs@(dv : _) =
-    f wms zvs (zipWith (*) (dv .* wm) (relu' <$> zv) : dvs)
+  f (wm : wms) (zv : zvs) dvs@(dv : _) = f wms zvs $ (: dvs) $ zipWith
+    (*)
+    [ sum $ zipWith (*) row dv | row <- wm ]
+    (relu' <$> zv)
+
+deltasnew :: [Float] -> [Float] -> NeuralNet -> ([[Float]], [[Float]])
+deltasnew xv yv layers =
+  let (avs@(av : _), zv : zvs) = revaz xv layers
+      delta0 = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
+  in  (reverse avs, f (transpose . snd <$> reverse layers) zvs [delta0]) where
+  f _          []         dvs          = dvs
+  f (wm : wms) (zv : zvs) dvs@(dv : _) = f wms zvs $ (: dvs) $ zipWith
+    (*)
+    [ sum $ zipWith (*) row dv | row <- wm ]
+    (relu' <$> zv)
 
 eta :: Float
 eta = 0.002
