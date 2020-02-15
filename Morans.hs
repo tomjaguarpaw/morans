@@ -255,8 +255,8 @@ deltas xv yv layers =
 deltasnew :: [Float] -> [Float] -> NeuralNet -> ([[Float]], [[Float]])
 deltasnew xv yv layers =
   let (av, avs, zv : zvs) = revaznew' xv layers
-      dv0       = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
-      weights   = snd <$> layers
+      dv0        = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
+      weights    = snd <$> layers
       revweights = transpose <$> reverse weights
 
       backpropagateActivations = revMapWithState (\dv (wm, zv) ->
