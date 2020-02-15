@@ -210,7 +210,7 @@ deltasnew xv yv layers =
   f _          []         dvs          = dvs
   f (wm : wms) (zv : zvs) dvs@(dv : _) = f wms zvs $ (: dvs) $ zipWith
     (*)
-    [ dot dv row | row <- wm ]
+    (dot dv <$> wm)
     (relu' <$> zv)
 
 eta :: Float
