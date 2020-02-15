@@ -257,10 +257,9 @@ deltasnew xv yv layers =
   let (av, avs, zv : zvs) = revaznew' xv layers
       delta0 = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
       weights = snd <$> layers
+      (dv, dvs) = g delta0 (zip (transpose <$> reverse weights) zvs)
 
-  in  (reverse avs, f (zip (transpose <$> reverse weights) zvs) delta0) where
-  f l t = let (dv, dvs) = g t l in dv:dvs
-
+  in  (reverse avs, dv:dvs) where
   g = revMapWithState (\dv (wm, zv) ->
                  (zipWith (*) (dv .* wm) (relu' <$> zv), dv))
 
