@@ -242,11 +242,11 @@ deltasnew xv yv layers =
       delta0 = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
       weights = snd <$> layers
 
-  in  (reverse avs, f (zip (transpose <$> reverse weights) zvs) ([], delta0)) where
-  f l t = let (dvs, dv) = g t l in dv:dvs
+  in  (reverse avs, f (zip (transpose <$> reverse weights) zvs) delta0) where
+  f l t = let (dv, dvs) = g t l in dv:dvs
 
-  g = foldl' (\(dvs, dv) (wm, zv) ->
-                 (dv:dvs, zipWith (*) (dv .* wm) (relu' <$> zv)))
+  g = revMapWithState (\dv (wm, zv) ->
+                 (zipWith (*) (dv .* wm) (relu' <$> zv), dv))
 
 
 eta :: Float
