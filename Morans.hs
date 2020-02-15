@@ -17,6 +17,7 @@ import           System.Random
 import           Data.Ord
 import           GHC.Int                        ( Int64 )
 
+import           Control.Arrow                  ( first )
 import           Control.Monad
 import           Data.List
 import           Data.Maybe                     ( isJust )
@@ -85,7 +86,8 @@ tests =
     ("prop_newBrain_rectangular", prop_newBrain_rectangular),
     ("prop_genNeuralNetwork_valid", prop_genNeuralNetwork_valid),
     ("prop_deltas_match", prop_deltas_match),
-    ("prop_revazes_match", prop_revazes_match)
+    ("prop_revazes_match", prop_revazes_match),
+    ("prop_learns_match", prop_learns_match)
   ]
 
 genVector :: Hedgehog.MonadGen m => Int -> m [Float]
@@ -124,12 +126,20 @@ deltasInput = do
 
   return (vin, vout, nn)
 
+prop_learns_match :: Hedgehog.Property
+prop_learns_match =
+  Hedgehog.property $ do
+    (vin, vout, nn) <- Hedgehog.forAll deltasInput
+
+    learnNew vin vout nn Hedgehog.=== learn vin vout nn
+
 prop_deltas_match :: Hedgehog.Property
 prop_deltas_match =
   Hedgehog.property $ do
     (vin, vout, nn) <- Hedgehog.forAll deltasInput
 
-    deltasnew vin vout nn Hedgehog.=== deltas vin vout nn
+    deltasnew vin vout nn Hedgehog.=== first dropLast (deltas vin vout nn)
+      where dropLast xs = take (length xs - 1) xs
 
 prop_revazes_match :: Hedgehog.Property
 prop_revazes_match =
@@ -200,15 +210,21 @@ revaz xs = foldl'
 
 revaznew
   :: Foldable t => [Float] -> t ([Float], [[Float]]) -> ([[Float]], [[Float]])
-revaznew xs nn = let (av, avs_zs) = revMapWithState
-                       (\av layer ->
-                          let zs' = zLayer av layer
-                          in (relu <$> zs', (av, zs'))
-                       )
-                       xs
-                       nn
-                     (avs, zs) = unzip avs_zs
+revaznew xs nn = let (av, avs, zs) = revaznew' xs nn
                  in (av:avs, zs)
+
+revaznew'
+  :: Foldable t => [Float] -> t ([Float], [[Float]])
+  -> ([Float], [[Float]], [[Float]])
+revaznew' xs nn = let (av, avs_zs) = revMapWithState
+                        (\av layer ->
+                           let zs' = zLayer av layer
+                           in (relu <$> zs', (av, zs'))
+                        )
+                        xs
+                        nn
+                      (avs, zs) = unzip avs_zs
+                 in (av, avs, zs)
 
 revMapWithState :: Foldable t
                 => (state -> item -> (state, stack))
@@ -238,7 +254,7 @@ deltas xv yv layers =
 
 deltasnew :: [Float] -> [Float] -> NeuralNet -> ([[Float]], [[Float]])
 deltasnew xv yv layers =
-  let (avs@(av : _), zv : zvs) = revaz xv layers
+  let (av, avs, zv : zvs) = revaznew' xv layers
       delta0 = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
       weights = snd <$> layers
 
@@ -262,6 +278,22 @@ lambda ..* x = map (lambda *) x
 learn :: [Float] -> [Float] -> NeuralNet -> NeuralNet
 learn xv yv layers =
   let (avs, dvs) = deltas xv yv layers
+      weights = snd <$> layers
+      biases  = fst <$> layers
+
+      newWeights = zipWith3
+        (\wvs av dv -> zipWith (\wv d -> descend wv (d ..* av)) wvs dv)
+        weights
+        avs
+        dvs
+
+      newBiases = zipWith descend biases dvs
+
+  in  zip newBiases newWeights
+
+learnNew :: [Float] -> [Float] -> NeuralNet -> NeuralNet
+learnNew xv yv layers =
+  let (avs, dvs) = deltasnew xv yv layers
       weights = snd <$> layers
       biases  = fst <$> layers
 
