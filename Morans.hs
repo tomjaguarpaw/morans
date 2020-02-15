@@ -1,4 +1,6 @@
 -- Requires files from http://yann.lecun.com/exdb/mnist/
+module Morans where
+
 import           Codec.Compression.GZip         ( decompress )
 import qualified Data.ByteString.Lazy          as BS
 import           System.Environment
