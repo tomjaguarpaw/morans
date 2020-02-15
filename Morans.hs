@@ -200,11 +200,14 @@ revaz xs = foldl'
 
 revaznew
   :: Foldable t => [Float] -> t ([Float], [[Float]]) -> ([[Float]], [[Float]])
-revaznew xs = (\(av, avs, zs) -> (av:avs, zs)) . foldl'
-  (\(av, avs, zs) layer ->
-    let zs' = zLayer av layer in (relu <$> zs', av : avs, zs' : zs)
-  )
-  (xs, [], [])
+revaznew xs nn = let (av, avs, zs) = foldl'
+                       (\(av, avs, zs) layer ->
+                          let zs' = zLayer av layer
+                          in (relu <$> zs', av : avs, zs' : zs)
+                       )
+                       (xs, [], [])
+                       nn
+                 in (av:avs, zs)
 
 dCost :: (Num p, Ord p) => p -> p -> p
 dCost a y | y == 1 && a >= y = 0
