@@ -1,3 +1,6 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 -- Requires files from http://yann.lecun.com/exdb/mnist/
 module Morans where
 
@@ -12,7 +15,64 @@ import           GHC.Int                        ( Int64 )
 
 import           Control.Monad
 import           Data.List
+import           Data.Maybe                     ( isJust )
 import           Data.Foldable                  ( for_ )
+
+import qualified Hedgehog
+import qualified Hedgehog.Gen   as Gen
+import qualified Hedgehog.Range as Range
+
+genLayerSizes :: Monad m => Hedgehog.GenT m [Int]
+genLayerSizes = Gen.list (Range.linear 2 10) (Gen.int (Range.linear 1 10))
+
+dimensions :: [[Float]] -> Maybe (Int, Int)
+dimensions = \case
+  []       -> Nothing
+  l@(x:xs) -> if all ((== length x) . length) xs
+              then Just (length x, length l)
+              else Nothing
+
+isRectangular :: [[Float]] -> Bool
+isRectangular = isJust . dimensions
+
+layerSizes :: NeuralNet -> Maybe [Int]
+layerSizes nn = do
+  allDimensions <- mapM (dimensions . snd) nn
+
+  let inputDimensions  = map fst allDimensions
+      outputDimensions = map snd allDimensions
+
+  guard (and (zipWith (==) (tail inputDimensions) outputDimensions))
+
+  return (head inputDimensions : outputDimensions)
+
+layerSizesMatch :: NeuralNet -> Bool
+layerSizesMatch = isJust . layerSizes
+
+biasesMatch :: NeuralNet -> Bool
+biasesMatch = all (isJust . match)
+  where match (bias, weights) = do
+          (_, outputDimension) <- dimensions weights
+          guard (length bias == outputDimension)
+
+prop_newBrain_rectangular :: Hedgehog.Property
+prop_newBrain_rectangular =
+  Hedgehog.property $ do
+    ls <- Hedgehog.forAll genLayerSizes
+    nn <- Hedgehog.evalIO (newBrain ls)
+    correctShape nn
+
+correctShape :: NeuralNet -> Hedgehog.PropertyT IO ()
+correctShape nn = do
+    Hedgehog.assert (all (isRectangular . snd) nn)
+    Hedgehog.assert (layerSizesMatch nn)
+    Hedgehog.assert (biasesMatch nn)
+
+tests :: IO Bool
+tests =
+  Hedgehog.checkParallel $ Hedgehog.Group "" [
+    ("prop_newBrain_rectangular", prop_newBrain_rectangular)
+  ]
 
 type Biases = [Float]
 type Weights = [[Float]]
