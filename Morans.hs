@@ -237,10 +237,10 @@ deltasnew xv yv layers =
   in  (reverse avs, f (zip (transpose <$> reverse weights) zvs) ([], delta0)) where
   f l t = let (dvs, dv) = g l t in dv:dvs
 
-  g []                   (dvs, dv) = (dvs, dv)
-  g ((wm, zv) : wms_zvs) (dvs, dv) =
-    g wms_zvs (dv:dvs, zipWith (*) (dv .* wm) (relu' <$> zv))
-
+  g l t = foldl' (\(dvs, dv) (wm, zv) ->
+                  (dv:dvs, zipWith (*) (dv .* wm) (relu' <$> zv)))
+                 t
+                 l
 
 eta :: Float
 eta = 0.002
