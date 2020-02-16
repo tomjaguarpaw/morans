@@ -65,8 +65,11 @@ zLayer as (bs, wvs) = zipWith (+) bs $ sum . zipWith (*) as <$> wvs
 dot :: [Float] -> [Float] -> Float
 dot v1 v2 = sum (zipWith (*) v1 v2)
 
-zLayer_new ::[Float] -> ([Float], [[Float]]) -> [Float]
-zLayer_new as (bs, wvs) = bs .+ (dot as <$> wvs)
+(.*) :: [Float] -> [[Float]] -> [Float]
+v .* m = dot v <$> m
+
+zLayer_new :: [Float] -> ([Float], [[Float]]) -> [Float]
+zLayer_new as (bs, wvs) = bs .+ (as .* wvs)
 
 feed = foldl' (((relu <$>) . ) . zLayer)
 
