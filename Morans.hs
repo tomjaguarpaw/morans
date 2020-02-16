@@ -107,10 +107,14 @@ revaz xs = foldl' (\(avs@(av:_), zs) (bs, wms) -> let
 revaz_new :: [Float]
           -> [([Float], [[Float]])]
           -> ([[Float]], [[Float]])
-revaz_new xs =
-  foldl' (\(avs@(av:_), zs) (bs, wms) ->
-             let zs' = zLayer av (bs, wms)
-             in ((relu <$> zs'):avs, zs':zs)) ([xs], [])
+revaz_new xs ys =
+  let (av, avs, zs) =
+        foldl' (\(av, avs, zs) (bs, wms) ->
+                  let zs' = zLayer av (bs, wms)
+                  in ((relu <$> zs'), av:avs, zs':zs))
+             (xs, [], [])
+             ys
+  in (av:avs, zs)
 
 dCost a y | y == 1 && a >= y = 0
           | otherwise        = a - y
