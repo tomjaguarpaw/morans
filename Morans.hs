@@ -74,6 +74,7 @@ type Matrix = [[Float]]
 zLayer_new :: Vector -> (Vector, Matrix) -> Vector
 zLayer_new as (bs, wvs) = bs .+ (as .* wvs)
 
+feed :: [Float] -> [([Float], [[Float]])] -> [Float]
 feed = foldl' (((relu <$>) . ) . zLayer)
 
 revaz xs = foldl' (\(avs@(av:_), zs) (bs, wms) -> let
