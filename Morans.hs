@@ -59,8 +59,11 @@ relu' x | x < 0      = 0
 zLayer ::[Float] -> ([Float], [[Float]]) -> [Float]
 zLayer as (bs, wvs) = zipWith (+) bs $ sum . zipWith (*) as <$> wvs
 
+(.+) :: [Float] -> [Float] -> [Float]
+(.+) = zipWith (+)
+
 zLayer_new ::[Float] -> ([Float], [[Float]]) -> [Float]
-zLayer_new as (bs, wvs) = zipWith (+) bs $ sum . zipWith (*) as <$> wvs
+zLayer_new as (bs, wvs) = bs .+ (sum . zipWith (*) as <$> wvs)
 
 feed = foldl' (((relu <$>) . ) . zLayer)
 
