@@ -131,6 +131,16 @@ revaz_new xs ys = (av:avs, zs)
                  (xs, [])
                  ys
 
+revMapWithState :: (state -> a -> (state, stack))
+                -> state
+                -> [a]
+                -> (state, [stack])
+revMapWithState f z =
+  foldl' (\(state, stack) item ->
+     let (nextState, nextStack) = f state item
+     in (nextState, nextStack:stack))
+     (z, [])
+
 dCost a y | y == 1 && a >= y = 0
           | otherwise        = a - y
 
