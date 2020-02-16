@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 {-# OPTIONS_GHC -Wno-missing-signatures  #-}
@@ -18,6 +19,30 @@ import Data.Ord
 import Control.Monad
 import Data.List
 
+import Hedgehog
+import qualified Hedgehog.Gen as Gen
+import qualified Hedgehog.Range as Range
+
+floatList :: MonadGen m => m [Float]
+floatList = Gen.list (Range.linear 0 10)
+                     (Gen.float (Range.linearFrac (-10) 10))
+
+zLayerInput :: MonadGen m => m ([Float], ([Float], [[Float]]))
+zLayerInput = do
+  l1 <- floatList
+  l2 <- floatList
+  ll <- Gen.list (Range.linear 0 10) floatList
+
+  return (l1, (l2, ll))
+
+prop_same_zLayer :: Property
+prop_same_zLayer = property $ do
+  (l1, t) <- forAll zLayerInput
+  zLayer_new l1 t === zLayer l1 t
+
+tests :: IO Bool
+tests = checkSequential $$(discover)
+
 gauss scale = do
   x1 <- randomIO
   x2 <- randomIO
@@ -33,6 +58,9 @@ relu' x | x < 0      = 0
 
 zLayer ::[Float] -> ([Float], [[Float]]) -> [Float]
 zLayer as (bs, wvs) = zipWith (+) bs $ sum . zipWith (*) as <$> wvs
+
+zLayer_new ::[Float] -> ([Float], [[Float]]) -> [Float]
+zLayer_new as (bs, wvs) = zipWith (+) bs $ sum . zipWith (*) as <$> wvs
 
 feed = foldl' (((relu <$>) . ) . zLayer)
 
@@ -118,3 +146,14 @@ main = do
   case as of
     ["print"] -> print smart
     _         -> return ()
+
+newBrain_new :: [Int] -> IO [([Float], [[Float]])]
+newBrain_new szs@(_:ts) = zip (flip replicate 1 <$> ts) <$>
+  zipWithM (\m n -> replicateM n $ replicateM m $ gauss 0.01) szs ts
+
+{-
+prop_same_newBrain = property $ do
+  l <- forAll (Gen.list (Range.linear 1 10)
+                        (Gen.int (Range.linear 1 10)))
+  newBrain_new l === newBrain l
+-}
