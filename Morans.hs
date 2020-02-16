@@ -54,6 +54,11 @@ prop_same_feed = property $ do
   (l1, lt) <- forAll feedInput
   feed_new l1 lt === feed l1 lt
 
+prop_same_revaz :: Property
+prop_same_revaz = property $ do
+  (l1, lt) <- forAll feedInput
+  revaz_new l1 lt === revaz l1 lt
+
 tests :: IO Bool
 tests = checkSequential $$(discover)
 
@@ -98,6 +103,14 @@ feed_new = foldl' (\v m -> relu <$> zLayer v m)
 
 revaz xs = foldl' (\(avs@(av:_), zs) (bs, wms) -> let
   zs' = zLayer av (bs, wms) in ((relu <$> zs'):avs, zs':zs)) ([xs], [])
+
+revaz_new :: [Float]
+          -> [([Float], [[Float]])]
+          -> ([[Float]], [[Float]])
+revaz_new xs =
+  foldl' (\(avs@(av:_), zs) (bs, wms) ->
+             let zs' = zLayer av (bs, wms)
+             in ((relu <$> zs'):avs, zs':zs)) ([xs], [])
 
 dCost a y | y == 1 && a >= y = 0
           | otherwise        = a - y
