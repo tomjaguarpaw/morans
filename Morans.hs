@@ -1,3 +1,9 @@
+{-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# OPTIONS_GHC -Wno-missing-signatures  #-}
+{-# OPTIONS_GHC -Wno-type-defaults       #-}
+{-# OPTIONS_GHC -Wno-name-shadowing      #-}
+
 module Morans where
 
 -- Requires files from http://yann.lecun.com/exdb/mnist/
