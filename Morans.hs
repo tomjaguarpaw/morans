@@ -151,7 +151,7 @@ deltas_new xv yv layers = let
   in (reverse avs, f (transpose . snd <$> reverse layers) zvs [delta0]) where
     f _ [] dvs = dvs
     f (wm:wms) (zv:zvs) dvs@(dv:_) = f wms zvs $ (:dvs) $
-      zipWith (*) [sum $ zipWith (*) row dv | row <- wm] (relu' <$> zv)
+      zipWith (*) [dot row dv | row <- wm] (relu' <$> zv)
 
 eta = 0.002
 
