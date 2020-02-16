@@ -91,7 +91,9 @@ zLayer_new as (bs, wvs) = bs .+ (as .* wvs)
 feed :: [Float] -> [([Float], [[Float]])] -> [Float]
 feed = foldl' (((relu <$>) . ) . zLayer)
 
-feed_new :: [Float] -> [([Float], [[Float]])] -> [Float]
+type Layer = (Vector, Matrix)
+
+feed_new :: Vector -> [Layer] -> Vector
 feed_new = foldl' (\v m -> relu <$> zLayer v m)
 
 revaz xs = foldl' (\(avs@(av:_), zs) (bs, wms) -> let
