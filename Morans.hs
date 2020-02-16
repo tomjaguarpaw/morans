@@ -92,7 +92,7 @@ feed :: [Float] -> [([Float], [[Float]])] -> [Float]
 feed = foldl' (((relu <$>) . ) . zLayer)
 
 feed_new :: [Float] -> [([Float], [[Float]])] -> [Float]
-feed_new = foldl' (\v -> (relu <$>) . (zLayer v))
+feed_new = foldl' (\v m -> relu <$> zLayer v m)
 
 revaz xs = foldl' (\(avs@(av:_), zs) (bs, wms) -> let
   zs' = zLayer av (bs, wms) in ((relu <$> zs'):avs, zs':zs)) ([xs], [])
