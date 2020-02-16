@@ -104,9 +104,9 @@ feed_new = foldl' (\v m -> relu <$> zLayer v m)
 revaz xs = foldl' (\(avs@(av:_), zs) (bs, wms) -> let
   zs' = zLayer av (bs, wms) in ((relu <$> zs'):avs, zs':zs)) ([xs], [])
 
-revaz_new :: [Float]
-          -> [([Float], [[Float]])]
-          -> ([[Float]], [[Float]])
+revaz_new :: Vector
+          -> [Layer]
+          -> ([Vector], [Vector])
 revaz_new xs ys = (av:avs, zs)
   where (avs, zs) = unzip avs_zs
         (av, avs_zs) =
