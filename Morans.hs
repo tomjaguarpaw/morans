@@ -35,10 +35,24 @@ zLayerInput = do
 
   return (l1, (l2, ll))
 
+feedInput :: MonadGen m => m ([Float], [([Float], [[Float]])])
+feedInput = do
+  l1 <- floatList
+  lt <- Gen.list (Range.linear 0 10)
+                 ((,) <$> floatList
+                  <*> (Gen.list (Range.linear 0 10) floatList))
+
+  return (l1, lt)
+
 prop_same_zLayer :: Property
 prop_same_zLayer = property $ do
   (l1, t) <- forAll zLayerInput
   zLayer_new l1 t === zLayer l1 t
+
+prop_same_feed :: Property
+prop_same_feed = property $ do
+  (l1, lt) <- forAll feedInput
+  feed_new l1 lt === feed l1 lt
 
 tests :: IO Bool
 tests = checkSequential $$(discover)
