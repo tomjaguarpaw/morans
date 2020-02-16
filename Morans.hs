@@ -44,6 +44,16 @@ feedInput = do
 
   return (l1, lt)
 
+deltasInput :: MonadGen m => m ([Float], [Float], [([Float], [[Float]])])
+deltasInput = do
+  l1 <- floatList
+  l2 <- floatList
+  lt <- Gen.list (Range.linear 1 10)
+                 ((,) <$> floatList
+                  <*> (Gen.list (Range.linear 0 10) floatList))
+
+  return (l1, l2, lt)
+
 prop_same_zLayer :: Property
 prop_same_zLayer = property $ do
   (l1, t) <- forAll zLayerInput
@@ -58,6 +68,11 @@ prop_same_revaz :: Property
 prop_same_revaz = property $ do
   (l1, lt) <- forAll feedInput
   revaz_new l1 lt === revaz l1 lt
+
+prop_same_deltas :: Property
+prop_same_deltas = property $ do
+  (l1, l2, lt) <- forAll deltasInput
+  deltas_new l1 l2 lt === deltas l1 l2 lt
 
 tests :: IO Bool
 tests = checkSequential $$(discover)
@@ -120,6 +135,17 @@ dCost a y | y == 1 && a >= y = 0
           | otherwise        = a - y
 
 deltas xv yv layers = let
+  (avs@(av:_), zv:zvs) = revaz xv layers
+  delta0 = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
+  in (reverse avs, f (transpose . snd <$> reverse layers) zvs [delta0]) where
+    f _ [] dvs = dvs
+    f (wm:wms) (zv:zvs) dvs@(dv:_) = f wms zvs $ (:dvs) $
+      zipWith (*) [sum $ zipWith (*) row dv | row <- wm] (relu' <$> zv)
+
+deltas_new :: [Float]
+           -> [Float]
+           -> [([Float], [[Float]])] -> ([[Float]], [[Float]])
+deltas_new xv yv layers = let
   (avs@(av:_), zv:zvs) = revaz xv layers
   delta0 = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
   in (reverse avs, f (transpose . snd <$> reverse layers) zvs [delta0]) where
