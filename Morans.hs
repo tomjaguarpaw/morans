@@ -148,10 +148,10 @@ deltas_new :: [Float]
 deltas_new xv yv layers = let
   (avs@(av:_), zv:zvs) = revaz xv layers
   delta0 = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
-  in (reverse avs, f (transpose . snd <$> reverse layers) zvs [delta0]) where
-    f _ [] dvs = dvs
-    f (wm:wms) (zv:zvs) dvs@(dv:_) = f wms zvs $ (:dvs) $
-      zipWith (*) [dot row dv | row <- wm] (relu' <$> zv)
+  in (reverse avs, f (transpose . snd <$> reverse layers) zvs delta0 []) where
+    f _ [] dv dvs = dv:dvs
+    f (wm:wms) (zv:zvs) dv dvs = f wms zvs
+      (zipWith (*) (dv .* wm) (relu' <$> zv)) (dv:dvs)
 
 eta = 0.002
 
