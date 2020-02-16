@@ -151,11 +151,10 @@ deltas_new xv yv layers = let
   in (reverse avs,
       f (zip (transpose . snd <$> reverse layers) zvs) (delta0, []))
   where
-    f l t = let (dv, dvs) = g l t in dv:dvs
+    f l t = let (dv, dvs) = g t l in dv:dvs
 
-    g l t = foldl h t l
-      where h (dv, dvs) (wm, zv) =
-              (zipWith (*) (dv .* wm) (relu' <$> zv), dv:dvs)
+    g = foldl (\(dv, dvs) (wm, zv) ->
+          (zipWith (*) (dv .* wm) (relu' <$> zv), dv:dvs))
 
 eta = 0.002
 
