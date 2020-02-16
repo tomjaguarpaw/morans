@@ -153,9 +153,9 @@ deltas_new xv yv layers = let
   where
     f l t = let (dv, dvs) = g l t in dv:dvs
 
-    g [] (dv, dvs) = (dv, dvs)
-    g ((wm, zv):wms_zvs) (dv, dvs) = g wms_zvs
-      (zipWith (*) (dv .* wm) (relu' <$> zv), dv:dvs)
+    g l t = foldl h t l
+      where h (dv, dvs) (wm, zv) =
+              (zipWith (*) (dv .* wm) (relu' <$> zv), dv:dvs)
 
 eta = 0.002
 
