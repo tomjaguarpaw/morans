@@ -26,6 +26,7 @@ relu = max 0
 relu' x | x < 0      = 0
         | otherwise  = 1
 
+zLayer ::[Float] -> ([Float], [[Float]]) -> [Float]
 zLayer as (bs, wvs) = zipWith (+) bs $ sum . zipWith (*) as <$> wvs
 
 feed = foldl' (((relu <$>) . ) . zLayer)
