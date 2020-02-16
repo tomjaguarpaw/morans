@@ -149,11 +149,13 @@ deltas_new xv yv layers = let
   (avs@(av:_), zv:zvs) = revaz xv layers
   delta0 = zipWith (*) (zipWith dCost av yv) (relu' <$> zv)
   in (reverse avs,
-      f (zip (transpose . snd <$> reverse layers) zvs) delta0 [])
+      f (zip (transpose . snd <$> reverse layers) zvs) (delta0, []))
   where
-    f [] dv dvs = dv:dvs
-    f ((wm, zv):wms_zvs) dv dvs = f wms_zvs
-      (zipWith (*) (dv .* wm) (relu' <$> zv)) (dv:dvs)
+    f l t = let (dv, dvs) = g l t in dv:dvs
+
+    g [] (dv, dvs) = (dv, dvs)
+    g ((wm, zv):wms_zvs) (dv, dvs) = g wms_zvs
+      (zipWith (*) (dv .* wm) (relu' <$> zv), dv:dvs)
 
 eta = 0.002
 
