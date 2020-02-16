@@ -125,10 +125,10 @@ revaz_new :: Vector
 revaz_new xs ys = (av:avs, zs)
   where (avs, zs) = unzip avs_zs
         (av, avs_zs) =
-          foldl' (\(av, avs_zs) (bs, wms) ->
+          revMapWithState (\av (bs, wms) ->
                     let zs' = zLayer av (bs, wms)
-                    in (relu <$> zs', (av, zs'):avs_zs))
-                 (xs, [])
+                    in (relu <$> zs', (av, zs')))
+                 xs
                  ys
 
 revMapWithState :: (state -> a -> (state, stack))
