@@ -16,7 +16,6 @@ import System.Random
 import Data.Ord
 
 import Control.Monad
-import Data.Functor
 import Data.List
 
 gauss scale = do
