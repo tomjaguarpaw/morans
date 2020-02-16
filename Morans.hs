@@ -108,12 +108,13 @@ revaz_new :: [Float]
           -> [([Float], [[Float]])]
           -> ([[Float]], [[Float]])
 revaz_new xs ys =
-  let (av, avs, zs) =
-        foldl' (\(av, avs, zs) (bs, wms) ->
+  let (av, avs_zs) =
+        foldl' (\(av, avs_zs) (bs, wms) ->
                   let zs' = zLayer av (bs, wms)
-                  in ((relu <$> zs'), av:avs, zs':zs))
-             (xs, [], [])
+                  in ((relu <$> zs'), (av, zs'):avs_zs))
+             (xs, [])
              ys
+      (avs, zs) = unzip avs_zs
   in (av:avs, zs)
 
 dCost a y | y == 1 && a >= y = 0
